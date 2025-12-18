@@ -3,28 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payment Verification</title>
+    <title>Payment Status</title>
 
     <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
 
     <style>
       :root {
-        --primary: #6366f1;
         --bg: #0f172a;
-        --card: rgba(30, 41, 59, 0.8);
+        --card: rgba(30, 41, 59, 0.9);
         --success: #22c55e;
         --failed: #ef4444;
         --pending: #eab308;
-        --text-dim: #94a3b8;
         --border: rgba(255, 255, 255, 0.1);
       }
 
       * {
-        box-sizing: border-box;
         font-family: "Outfit", sans-serif;
+        box-sizing: border-box;
       }
 
       body {
@@ -37,58 +35,45 @@
       }
 
       .card {
-        width: 100%;
-        max-width: 520px;
         background: var(--card);
-        border-radius: 20px;
-        padding: 40px;
+        padding: 50px;
+        border-radius: 24px;
         border: 1px solid var(--border);
+        text-align: center;
+        width: 100%;
+        max-width: 420px;
       }
 
       h1 {
-        text-align: center;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
+        font-size: 26px;
       }
 
-      p {
-        text-align: center;
-        color: var(--text-dim);
-        margin-bottom: 24px;
-      }
-
-      input {
-        width: 100%;
-        padding: 14px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: rgba(15, 23, 42, 0.5);
-        color: white;
-        margin-bottom: 16px;
-      }
-
-      button {
-        width: 100%;
-        padding: 14px;
-        border-radius: 12px;
-        border: none;
-        background: var(--primary);
-        color: white;
+      .message {
+        font-size: 18px;
         font-weight: 600;
-        cursor: pointer;
+        margin-top: 20px;
       }
 
-      button:disabled {
-        opacity: 0.6;
+      .success {
+        color: var(--success);
+      }
+
+      .failed {
+        color: var(--failed);
+      }
+
+      .pending {
+        color: var(--pending);
       }
 
       .spinner {
-        width: 22px;
-        height: 22px;
+        width: 28px;
+        height: 28px;
         border: 3px solid rgba(255, 255, 255, 0.3);
         border-top-color: white;
         border-radius: 50%;
         animation: spin 1s linear infinite;
-        display: none;
         margin: 20px auto;
       }
 
@@ -97,224 +82,87 @@
           transform: rotate(360deg);
         }
       }
-
-      .result {
-        margin-top: 25px;
-        display: none;
-      }
-
-      .badge {
-        padding: 6px 14px;
-        border-radius: 999px;
-        font-weight: 600;
-        display: inline-block;
-        margin-bottom: 20px;
-      }
-
-      .success {
-        color: var(--success);
-        border: 1px solid var(--success);
-      }
-
-      .failed {
-        color: var(--failed);
-        border: 1px solid var(--failed);
-      }
-
-      .pending {
-        color: var(--pending);
-        border: 1px solid var(--pending);
-      }
-
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 14px;
-      }
-
-      .box {
-        padding: 14px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: rgba(15, 23, 42, 0.4);
-      }
-
-      .label {
-        font-size: 12px;
-        color: var(--text-dim);
-      }
-
-      .value {
-        font-weight: 600;
-        margin-top: 4px;
-        word-break: break-all;
-      }
-
-      .error {
-        color: var(--failed);
-        margin-top: 15px;
-        display: none;
-        text-align: center;
-      }
     </style>
   </head>
 
   <body>
     <div class="card">
-      <h1>Verifying Payment</h1>
-      <p>Please wait while we confirm your payment</p>
-
-      <input id="orderId" placeholder="Order ID" />
-      <button id="verifyBtn">Start Verification</button>
-
+      <h1>Payment Status</h1>
       <div id="spinner" class="spinner"></div>
-      <div id="error" class="error"></div>
-
-      <div id="result" class="result">
-        <div id="statusBadge" class="badge"></div>
-
-        <div class="grid">
-          <div class="box">
-            <div class="label">Payment ID</div>
-            <div id="paymentId" class="value">-</div>
-          </div>
-          <div class="box">
-            <div class="label">Amount</div>
-            <div id="amount" class="value">-</div>
-          </div>
-          <div class="box">
-            <div class="label">Currency</div>
-            <div id="currency" class="value">-</div>
-          </div>
-          <div class="box">
-            <div class="label">Payment Type</div>
-            <div id="paymentType" class="value">-</div>
-          </div>
-        </div>
-      </div>
+      <div id="message" class="message pending">Verifying payment...</div>
     </div>
 
     <script>
-      const btn = document.getElementById("verifyBtn");
+      const message = document.getElementById("message");
       const spinner = document.getElementById("spinner");
-      const orderIdInput = document.getElementById("orderId");
-      const result = document.getElementById("result");
-      const error = document.getElementById("error");
-      const badge = document.getElementById("statusBadge");
 
       let poller = null;
       const POLL_TIME = 3000;
 
-      // 🔹 GET order_id from URL
       function getOrderIdFromURL() {
         const params = new URLSearchParams(window.location.search);
         return params.get("order_id");
       }
 
-      // 🔹 GET status from URL (optional instant UI)
-      function getStatusFromURL() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get("status");
-      }
-
-      btn.onclick = () => {
-        const orderId = orderIdInput.value.trim();
-        if (!orderId) {
-          showError("Order ID is required");
-          return;
-        }
-        startPolling(orderId);
-      };
-
-      function startPolling(orderId) {
-        spinner.style.display = "block";
-        btn.disabled = true;
-        hideError();
-
-        if (poller) clearInterval(poller);
-
-        checkPayment(orderId);
-        poller = setInterval(() => checkPayment(orderId), POLL_TIME);
-      }
-
       async function checkPayment(orderId) {
         try {
-          const res = await fetch(`https://one-app-payment-service.mergit.in/payment/verify-payment/${orderId}`);
+          const res = await fetch(
+            `https://one-app-payment-service.mergit.in/payment/verify-payment/${orderId}`
+          );
           const json = await res.json();
 
           if (json.status !== "success") {
-            throw new Error(json.message || "Verification failed");
+            throw new Error("Verification failed");
           }
 
-          const d = json.data;
-          showResult(d);
+          const status = json.data.paymentStatus.toUpperCase();
 
-          const s = d.paymentStatus.toUpperCase();
-          if (
-            ["SUCCESS", "CHARGED", "COMPLETED", "FAILED", "CANCELLED", "ERROR"].includes(
-              s
-            )
-          ) {
+          if (["SUCCESS", "CHARGED", "COMPLETED"].includes(status)) {
+            showSuccess();
+            stopPolling();
+          } else if (["FAILED", "CANCELLED", "ERROR"].includes(status)) {
+            showFailed();
             stopPolling();
           }
-        } catch (e) {
-          showError(e.message);
+        } catch (err) {
+          showFailed();
           stopPolling();
         }
       }
 
-      function stopPolling() {
+      function showSuccess() {
         spinner.style.display = "none";
-        btn.disabled = false;
+        message.textContent = "✅ Payment Successful";
+        message.className = "message success";
+      }
+
+      function showFailed() {
+        spinner.style.display = "none";
+        message.textContent = "❌ Payment Failed";
+        message.className = "message failed";
+      }
+
+      function startPolling(orderId) {
+        checkPayment(orderId);
+        poller = setInterval(() => checkPayment(orderId), POLL_TIME);
+      }
+
+      function stopPolling() {
         if (poller) clearInterval(poller);
       }
 
-      function showResult(d) {
-        result.style.display = "block";
-
-        document.getElementById("paymentId").textContent = d.paymentId || "-";
-        document.getElementById("amount").textContent = d.amount || "-";
-        document.getElementById("currency").textContent = d.currency || "INR";
-        document.getElementById("paymentType").textContent = d.paymentType || "-";
-
-        badge.textContent = d.paymentStatus;
-        badge.className =
-          "badge " +
-          (d.paymentStatus === "SUCCESS" || d.paymentStatus === "CHARGED"
-            ? "success"
-            : d.paymentStatus === "FAILED"
-            ? "failed"
-            : "pending");
-      }
-
-      function showError(msg) {
-        error.textContent = msg;
-        error.style.display = "block";
-      }
-
-      function hideError() {
-        error.style.display = "none";
-      }
-
-      // 🔹 AUTO-START ON PAGE LOAD (JUSPAY REDIRECT)
       window.onload = () => {
         const orderId = getOrderIdFromURL();
-        const status = getStatusFromURL();
 
-        if (orderId) {
-          orderIdInput.value = orderId;
-
-          // Instant feedback (don’t trust fully)
-          if (status === "CHARGED") {
-            badge.textContent = "PROCESSING";
-            badge.className = "badge pending";
-            result.style.display = "block";
-          }
-
-          startPolling(orderId);
+        if (!orderId) {
+          spinner.style.display = "none";
+          message.textContent = "Invalid payment reference";
+          message.className = "message failed";
+          return;
         }
+
+        startPolling(orderId);
       };
     </script>
   </body>
 </html>
-
