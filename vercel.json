@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://your-actual-backend-url.com/api/$1"
+    }
+  ],
+  "cleanUrls": true
+}
