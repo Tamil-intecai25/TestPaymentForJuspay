@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verify Payment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 40px;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    pre {
+      background: #111827;
+      color: #e5e7eb;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Verify Payment</h2>
+
+    <input
+      type="text"
+      id="orderId"
+      placeholder="Enter Order ID"
+    />
+
+    <button onclick="verifyPayment()">Verify Payment</button>
+
+    <pre id="response"></pre>
+  </div>
+
+  <script>
+    async function verifyPayment() {
+      const orderId = document.getElementById('orderId').value;
+      const responseBox = document.getElementById('response');
+
+      if (!orderId) {
+        responseBox.textContent = 'Order ID is required';
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `http://localhost:3000/verify-payment/${orderId}`
+        );
+
+        const data = await res.json();
+        responseBox.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        responseBox.textContent = 'Error connecting to server';
+      }
+    }
+  </script>
+
+</body>
+</html>
