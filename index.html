@@ -239,7 +239,7 @@
 
       async function checkPayment(orderId) {
         try {
-          const res = await fetch(`/api/verify-payment/${orderId}`);
+          const res = await fetch(`https://one-app-payment-service.mergit.in/payment/verify-payment/${orderId}`);
           const json = await res.json();
 
           if (json.status !== "success") {
@@ -317,3 +317,4 @@
     </script>
   </body>
 </html>
+
